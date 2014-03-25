@@ -14,6 +14,7 @@
 @class XMPPMessage;
 @class XMPPPresence;
 @class XMPPModule;
+@class XMPPElement;
 @class XMPPElementReceipt;
 @protocol XMPPStreamDelegate;
 
@@ -27,15 +28,19 @@
 
 extern NSString *const XMPPStreamErrorDomain;
 
-enum XMPPStreamErrorCode
-{
+typedef NS_ENUM(NSUInteger, XMPPStreamErrorCode) {
 	XMPPStreamInvalidType,       // Attempting to access P2P methods in a non-P2P stream, or vice-versa
 	XMPPStreamInvalidState,      // Invalid state for requested action, such as connect when already connected
 	XMPPStreamInvalidProperty,   // Missing a required property, such as myJID
 	XMPPStreamInvalidParameter,  // Invalid parameter, such as a nil JID
 	XMPPStreamUnsupportedAction, // The server doesn't support the requested action
 };
-typedef enum XMPPStreamErrorCode XMPPStreamErrorCode;
+
+typedef NS_ENUM(NSUInteger, XMPPStreamStartTLSPolicy) {
+    XMPPStreamStartTLSPolicyAllowed,   // TLS will be used if the server requires it
+    XMPPStreamStartTLSPolicyPreferred, // TLS will be used if the server offers it
+    XMPPStreamStartTLSPolicyRequired   // TLS will be used if the server offers it, else the stream won't connect
+};
 
 extern const NSTimeInterval XMPPStreamTimeoutNone;
 
@@ -105,14 +110,14 @@ extern const NSTimeInterval XMPPStreamTimeoutNone;
 **/
 @property (readwrite, assign) UInt16 hostPort;
 
-
 /**
- * Start TLS is used if the server supports it, regardless of wether it is required or not.
+ * The stream's policy on when to Start TLS.
  *
- * The default is NO
+ * The default is XMPPStreamStartTLSPolicyAllowed.
+ *
+ * @see XMPPStreamStartTLSPolicy
 **/
-@property (readwrite, assign) BOOL autoStartTLS;
-
+@property (readwrite, assign) XMPPStreamStartTLSPolicy startTLSPolicy;
 
 /**
  * The JID of the user.
@@ -222,6 +227,22 @@ extern const NSTimeInterval XMPPStreamTimeoutNone;
  * Tag values are not used internally, and should not be used by xmpp modules.
 **/
 @property (readwrite, strong) id tag;
+
+/**
+ * RFC 6121 states that starting a session is no longer required.
+ * To skip this step set skipStartSession to YES.
+ *
+ * [RFC3921] specified one additional
+ * precondition: formal establishment of an instant messaging and
+ * presence session.  Implementation and deployment experience has
+ * shown that this additional step is unnecessary.  However, for
+ * backward compatibility an implementation MAY still offer that
+ * feature.  This enables older software to connect while letting
+ * newer software save a round trip.
+ *
+ * The default value is NO.
+**/
+@property (readwrite, assign) BOOL skipStartSession;
 
 #if TARGET_OS_IPHONE
 
@@ -588,6 +609,18 @@ extern const NSTimeInterval XMPPStreamTimeoutNone;
  * Using this method guarantees everything is done as an atomic operation.
 **/
 - (void)resendMyPresence;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark Stanza Validation
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Validates that a response element is FROM the jid that the request element was sent TO.
+ * Supports validating responses when request didn't specify a TO.
+**/
+- (BOOL)isValidResponseElementFrom:(XMPPJID *)from forRequestElementTo:(XMPPJID *)to;
+
+- (BOOL)isValidResponseElement:(XMPPElement *)response forRequestElement:(XMPPElement *)request;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark Module Plug-In System

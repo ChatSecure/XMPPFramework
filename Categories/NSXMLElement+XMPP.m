@@ -8,6 +8,60 @@
 @implementation NSXMLElement (XMPP)
 
 /**
+ * Convenience methods for Creating elements.
+**/
+
++ (NSXMLElement *)elementWithName:(NSString *)name numberValue:(NSNumber *)number
+{
+    return [self elementWithName:name stringValue:[number stringValue]];
+}
+
+- (id)initWithName:(NSString *)name numberValue:(NSNumber *)number
+{
+    return [self initWithName:name stringValue:[number stringValue]];
+}
+
++ (NSXMLElement *)elementWithName:(NSString *)name objectValue:(id)objectValue
+{
+    if([objectValue isKindOfClass:[NSString class]])
+    {
+        return [self elementWithName:name stringValue:objectValue];
+    }
+    else if([objectValue isKindOfClass:[NSNumber class]])
+    {
+        return [self elementWithName:name numberValue:objectValue];
+    }
+    else if([objectValue respondsToSelector:@selector(stringValue)])
+    {
+        return [self elementWithName:name stringValue:[objectValue stringValue]];
+    }
+    else
+    {
+        return [self elementWithName:name];
+    }
+}
+
+- (id)initWithName:(NSString *)name objectValue:(id)objectValue
+{
+    if([objectValue isKindOfClass:[NSString class]])
+    {
+        return [self initWithName:name stringValue:objectValue];
+    }
+    else if([objectValue isKindOfClass:[NSNumber class]])
+    {
+        return [self initWithName:name numberValue:objectValue];
+    }
+    else if([objectValue respondsToSelector:@selector(stringValue)])
+    {
+        return [self initWithName:name stringValue:[objectValue stringValue]];
+    }
+    else
+    {
+        return [self initWithName:name];
+    }
+}
+
+/**
  * Quick method to create an element
 **/
 + (NSXMLElement *)elementWithName:(NSString *)name xmlns:(NSString *)ns
@@ -273,6 +327,22 @@
     [self addAttributeWithName:name stringValue:[number stringValue]];
 }
 
+- (void)addAttributeWithName:(NSString *)name objectValue:(id)objectValue
+{
+    if([objectValue isKindOfClass:[NSString class]])
+    {
+        [self addAttributeWithName:name stringValue:objectValue];
+    }
+    else if([objectValue isKindOfClass:[NSNumber class]])
+    {
+        [self addAttributeWithName:name numberValue:objectValue];
+    }
+    else if([objectValue respondsToSelector:@selector(stringValue)])
+    {
+        [self addAttributeWithName:name stringValue:[objectValue stringValue]];
+    }
+}
+
 /**
  * The following methods return the corresponding value of the attribute with the given name.
 **/
@@ -283,7 +353,26 @@
 }
 - (BOOL)attributeBoolValueForName:(NSString *)name
 {
-	return [[self attributeStringValueForName:name] boolValue];
+    NSString *attributeStringValueForName = [self attributeStringValueForName:name];
+    
+    BOOL result = NO;
+    
+    // An XML boolean datatype can have the following legal literals: true, false, 1, 0
+    
+    if ([attributeStringValueForName isEqualToString:@"true"] || [attributeStringValueForName isEqualToString:@"1"])
+    {
+        result = YES;
+    }
+    else if([attributeStringValueForName isEqualToString:@"false"] || [attributeStringValueForName isEqualToString:@"0"])
+    {
+        result = NO;
+    }
+    else
+    {
+        result = [attributeStringValueForName boolValue];
+    }
+    
+    return result;
 }
 - (float)attributeFloatValueForName:(NSString *)name
 {

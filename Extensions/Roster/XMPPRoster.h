@@ -12,6 +12,7 @@
 
 @protocol XMPPRosterStorage;
 @class DDList;
+@class XMPPIDTracker;
 
 /**
  * The XMPPRoster provides the scaffolding for a roster solution.
@@ -41,6 +42,8 @@
 	id multicastDelegate;
  */
 	__strong id <XMPPRosterStorage> xmppRosterStorage;
+    
+    XMPPIDTracker *xmppIDTracker;
 	
 	Byte config;
 	Byte flags;
@@ -76,6 +79,16 @@
  * The default value is YES.
 **/
 @property (assign) BOOL autoFetchRoster;
+
+/**
+ * Whether or not to automatically clear all Users and Resources when the stream disconnects.
+ * If you are using XMPPRosterCoreDataStorage you may want to set autoRemovePreviousDatabaseFile to NO.
+ *
+ * All Users and Resources will be cleared when the roster is next populated regardless of this property.
+ *
+ * The default value is YES.
+**/
+@property (assign) BOOL autoClearAllUsersAndResources;
 
 /**
  * In traditional IM applications, the "buddy" system is rather straightforward.
@@ -147,6 +160,10 @@
 **/
 @property (assign, getter = isPopulating, readonly) BOOL populating;
 
+/**
+ * The initial roster has been received by client and populated.
+**/
+@property (assign, readonly) BOOL hasRoster;
 
 /**
  * Manually fetch the roster from the server.
